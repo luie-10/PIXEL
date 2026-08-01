@@ -12,27 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c2155de91c7bf7468987ae83eaed394, type: 3}
   m_Name: TestCard2
   m_EditorClassIdentifier: 
-  cardId: TestCard2
-  displayName: "\uD14C\uC2A4\uD2B8\uCE74\uB4DC2"
-  cardArt: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  cardId: Card2
+  displayName: "\uB808\uB4DC \uB300\uC26C"
+  cardArt: {fileID: 21300000, guid: b559703f74caf9346a3fa579361a2f73, type: 3}
   skillEffectIcon: {fileID: 21300000, guid: 127998a42b3d19742bacc91fe6982c35, type: 3}
   color: 4
-  effectDetailText: "Kris picked up a pencil.\r\nThey began by sketching what they
-    had seen behind the tree.\r\nBut, as they sketched, the line began to err, as
-    if the pencil had lost its way.\r\nSo they started again, drawing over the lines
-    they had already made.\r\nMany times, they would suddenly halt, or the pencil
-    drafted into a new drawing...\r\nSo, they started over, over, over again.\r\nThrough
-    many repetitions, their movements became faster and smoother...\r\n... until
-    without looking, they had completed a sketch in a single, wild line.\r\n...\r\nIn
-    the end, as a result of layering the sketches on top of each other...\r\n...
-    The surface of the canvas was nothing more than a monochrome smear.\r\n...\r\nNext,
-    a tree was painted over it...\r\n... painted over everything...\r\n... leaving
-    nothing but a simple still life.\r\n... After all, there wasn't anything to look
-    at in the room besides a single tree.\r\n...\r\nKris got up. It seemed the painting
-    was complete.\r\n...\r\nBut, their hand, smudged with graphite...\r\n... was
-    still moving, as if to trace some unseen shape.\r\nAn Egg was picked up from
-    a nearby easel.\r\n\r"
-  passiveDetailText: "\uB098\uBB34 \uB4A4\uC5D0 \uB0A8\uC790\uAC00 \uC788\uB2E4.\r"
+  effectDetailText: "\uD6A8\uACFC \uBC1C\uB3D9\uC2DC \uD53C\uACA9\uB9C8\uB2E4 \uD604\uC7AC
+    \uBCF4\uC720\uD55C \uBE68\uAC04 \uD53D\uC140\uC744 4\uAC1C \uC18C\uBAA8, \uBE68\uAC04
+    \uD53D\uC140\uC774 \uC5C6\uB2E4\uBA74 \uD6A8\uACFC\uB97C \uC911\uC9C0\uD568.\r\n\r\n\uADFC\uCC98\uC758
+    \uC801 3\uBA85\uC744 \uD5A5\uD574 \uBE60\uB978 \uC18D\uB3C4\uB85C \uB3CC\uC9C4\uD568.
+    \r\n\r\n\uD53C\uACA9\uC2DC, \uD53C\uACA9\uD55C \uBA74\uC758 \uD53D\uC140 5\uAC1C
+    \uB72F\uC5B4\uBA39\uC74C.\r\n\uC9C1\uD6C4, \uB2E4\uC74C \uB300\uC0C1\uC73C\uB85C
+    \uC774\uB3D9\uD568.\r\n\r\n3\uBA85\uC744 \uBAA8\uB450 \uACF5\uACA9\uD588\uB2E4\uBA74,
+    3.5\uCD08\uAC04 \uC774\uC18D +5 \uC5BB\uC74C."
+  passiveDetailText: "\uD6A8\uACFC\uB97C \uBC1C\uB3D9\uC2DC\uD0A8 \uD53D\uC140\uC5D0
+    \uBE68\uAC04 \uD53D\uC140 \uC788\uB2E4\uBA74 \uBC1C\uB3D9\uC2DC \uD53D\uC140
+    5\uB97C \uC5BB\uC740\uD6C4 \uD53D\uC140 3\uC744 \uCD94\uAC00\uC801\uC73C\uB85C
+    \uC5BB\uC74C."
   usingAmoutMode: 0
   usingAmout: 25%
   effects: []

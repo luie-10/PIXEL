@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardId: Card1
   displayName: "\uAE54\uB054\uD55C \uB9C8\uBB34\uB9AC"
-  cardArt: {fileID: 21300000, guid: fbc2cc1850431fa4db59330a9beb45c3, type: 3}
+  cardArt: {fileID: 21300000, guid: 65a80d166e5bcf745bbc90b65cff107f, type: 3}
   skillEffectIcon: {fileID: 21300000, guid: 127998a42b3d19742bacc91fe6982c35, type: 3}
   color: 1
   effectDetailText: "\uB300\uC0C1 \uCC98\uCE58\uC2DC \uCE74\uB4DC\uB97C \uC0AC\uC6A9\uD560
