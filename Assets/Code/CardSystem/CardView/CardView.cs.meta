@@ -1,0 +1,33 @@
+fileFormatVersion: 2
+guid: bc80a069c6c3d3c49b6bccec9dfb2be1
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - cardTitle: {instanceID: 0}
+  - cardArt: {instanceID: 0}
+  - skillEffectIcon: {instanceID: 0}
+  - usingAmoutText: {instanceID: 0}
+  - effectDetailText: {instanceID: 0}
+  - passiveDetailText: {instanceID: 0}
+  - iconBlueType: {fileID: 21300000, guid: 85767ab6c2908aa468f910c602ae6247, type: 3}
+  - iconRedType: {fileID: 21300000, guid: 6e47a1b013a111640a5f5e9c39672699, type: 3}
+  - iconYellowType: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  - iconGreenType: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  - attributeIconBlue: {fileID: 21300000, guid: 85767ab6c2908aa468f910c602ae6247, type: 3}
+  - attributeIconRed: {fileID: 21300000, guid: 5e5144b7c7037ec4dbaadda9ec1f7479, type: 3}
+  - attributeIconYellow: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  - attributeIconGreen: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  - onUseSkillIconBlue: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  - onUseSkillIconRed: {fileID: 21300000, guid: 127998a42b3d19742bacc91fe6982c35, type: 3}
+  - onUseSkillIconYellow: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  - onUseSkillIconGreen: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  - passiveIconBlue: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  - passiveIconRed: {fileID: 21300000, guid: ea674327c15350f4d84af910f4abbc78, type: 3}
+  - passiveIconYellow: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  - passiveIconGreen: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

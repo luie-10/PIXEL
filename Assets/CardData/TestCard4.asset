@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c2155de91c7bf7468987ae83eaed394, type: 3}
+  m_Name: TestCard4
+  m_EditorClassIdentifier: 
+  cardId: TestCard4
+  displayName: "\uD14C\uC2A4\uD2B8\uCE74\uB4DC4"
+  cardArt: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  skillEffectIcon: {fileID: 21300000, guid: 127998a42b3d19742bacc91fe6982c35, type: 3}
+  color: 3
+  effectDetailText: "\uB098\uBB34 \uB4A4\uC5D0 \uB0A8\uC790\uAC00 \uC788\uB2E4.\r"
+  passiveDetailText: "\uB098\uBB34 \uB4A4\uC5D0 \uB0A8\uC790\uAC00 \uC788\uB2E4.\r"
+  usingAmoutMode: 0
+  usingAmout: 333
+  effects: []
