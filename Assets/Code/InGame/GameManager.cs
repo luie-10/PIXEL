@@ -43,7 +43,17 @@ public class GameManager : MonoBehaviour
         totalSavedBlocks[PixelColor.Yellow] = 0;
         totalSavedBlocks[PixelColor.Green] = 0;
     }
+    // GameManager 클래스 내부 추가 메소드
+    public void UsePixel(PixelColor color, int amount = 1)
+    {
+        if (color == PixelColor.Black || color == PixelColor.None) return;
 
+        if (totalSavedBlocks.ContainsKey(color))
+        {
+            totalSavedBlocks[color] -= amount;
+            if (totalSavedBlocks[color] < 0) totalSavedBlocks[color] = 0;
+        }
+    }
     public void AddBlock(PixelColor color, int amount = 1)
     {
         if (color == PixelColor.None) return;

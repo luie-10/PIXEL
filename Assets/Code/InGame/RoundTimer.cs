@@ -12,7 +12,6 @@ public class RoundData
 public class RoundTimer : MonoBehaviour
 {
     [Header("Round Settings (Array)")]
-    [Tooltip("라운드 목록 설정 (인스펙터에서 추가/삭제/시간 수정 가능)")]
     public RoundData[] rounds;
     private int currentRoundIndex = 0;
 

@@ -1,7 +1,8 @@
 using UnityEngine;
+using UnityEngine.SceneManagement; // 씬 이동을 위해 필수!
 
 /// <summary>
-/// 선택한 카드 한 장을 씬 전환 뒤에도 유지하는 세션입니다.
+/// 선택한 카드 한 장을 씬 전환 뒤에도 유지하며, 3_Make_Pixel 씬으로 전환하는 세션입니다.
 /// 직접 배치하지 않아도 첫 카드 확정 시 자동으로 생성됩니다.
 /// </summary>
 public sealed class CardSelectionSession : MonoBehaviour
@@ -35,12 +36,19 @@ public sealed class CardSelectionSession : MonoBehaviour
     }
 
     /// <summary>
-    /// 선택한 카드 한 장을 저장하며, 세션이 없으면 자동으로 생성합니다.
+    /// 선택한 카드 한 장을 저장하고 '3_Make_Pixel' 씬으로 전환합니다.
+    /// 세션이 없으면 자동으로 생성합니다.
     /// </summary>
     public static void SetSelectedCard(CardDefinition card)
     {
         if (card == null) return;
+
+        // 1. 카드 데이터 저장
         GetOrCreate().selectedCard = card;
+        Debug.Log($"[CardSelectionSession] 카드 선택 완료: {card.CardId}");
+
+        // 2. '3_Make_Pixel' 씬으로 이동
+        SceneManager.LoadScene("3_Make_Pixel");
     }
 
     /// <summary>
