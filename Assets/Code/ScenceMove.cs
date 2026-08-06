@@ -9,6 +9,6 @@ public class SceneChanger : MonoBehaviour
     // 버튼 클릭 이벤트에 연결할 함수입니다.
     public void LoadTargetScene()
     {
-        SceneManager.LoadScene(targetSceneName);
+        LoadingSceneManager.LoadScene(targetSceneName);
     }
 }

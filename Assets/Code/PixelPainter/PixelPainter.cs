@@ -7,10 +7,10 @@ using TMPro;
 
 public enum EditorTool
 {
-    Pen,        // 펜 (색상 및 픽셀 설치)
-    Eraser,     // 지우개 (삭제)
-    Hand,       // 손바닥 (타일맵 둘러보기)
-    Magnifier,  // 돋보기 (마우스 스크롤로 확대/축소)
+    Pen,         // 펜 (색상 및 픽셀 설치)
+    Eraser,      // 지우개 (삭제)
+    Hand,        // 손바닥 (타일맵 둘러보기)
+    Magnifier,   // 돋보기 (마우스 스크롤로 확대/축소)
     AttackSelect // 공격 범위 타일 지정 모드
 }
 
@@ -200,27 +200,24 @@ public class PixelPainter : MonoBehaviour
     /// </summary>
     private void ToggleAttackTile(Vector3Int targetCellPos)
     {
-        // 도트가 그려진 위치가 아니면 지정 불가
         if (!pixelDrawTilemap.HasTile(targetCellPos))
         {
-            ShowWarning("픽셀이 그린 위치에만 공격 타일을 지정할 수 있습니다.");
+            ShowWarning("픽셀을 그린 위치에만 공격 타일을 지정할 수 있습니다.");
             return;
         }
 
-        int maxAttackTiles = GetActualPlacedPixelCount();
+        int maxAttackTiles = GetMaxAttackTileCount();
 
-        // 이미 지정된 경우 -> 해제
         if (attackTilePositions.Contains(targetCellPos))
         {
             attackTilePositions.Remove(targetCellPos);
             if (attackRangeTilemap != null) attackRangeTilemap.SetTile(targetCellPos, null);
         }
-        // 지정되지 않은 경우 -> 새로 지정 (개수 제한 체크)
         else
         {
             if (attackTilePositions.Count >= maxAttackTiles)
             {
-                ShowWarning($"공격 타일은 그린 픽셀 수({maxAttackTiles}개)만큼만 지정 가능합니다!");
+                ShowWarning($"공격 타일은 최대 {maxAttackTiles}개(전체 픽셀의 1/4 반올림)까지만 지정 가능합니다!");
                 return;
             }
 
@@ -232,28 +229,75 @@ public class PixelPainter : MonoBehaviour
     }
 
     // ==========================================
-    // 4. 모드 전환: '다음으로' 버튼 클릭 시 호출
+    // 4. 모드 전환 및 저장/복귀
     // ==========================================
+
+    /// <summary>
+    /// '다음으로' 버튼 클릭 시 호출
+    /// - 도트 그리기 단계: 공격 타일 지정 모드로 전환
+    /// - 공격 타일 지정 단계: 저장 후 게임 씬으로 이동
+    /// </summary>
     public void OnClickNextButton()
     {
-        int totalPixels = GetActualPlacedPixelCount();
-
-        // 📌 [조건] 최소 픽셀 개수 제한 검사
-        if (totalPixels < minTotalBlocks)
+        // 1단계: 도트 그리기 완료 후 공격 타일 지정 모드로 전환
+        if (currentTool != EditorTool.AttackSelect)
         {
-            ShowWarning($"최소 {minTotalBlocks}개 이상의 픽셀을 그려야 합니다! (현재 {totalPixels}개)");
-            return;
+            int totalPixels = GetActualPlacedPixelCount();
+
+            if (totalPixels < minTotalBlocks)
+            {
+                ShowWarning($"최소 {minTotalBlocks}개 이상의 픽셀을 그려야 합니다! (현재 {totalPixels}개)");
+                return;
+            }
+
+            if (editorUIPanel != null) editorUIPanel.SetActive(false);
+            if (attackSelectUIPanel != null) attackSelectUIPanel.SetActive(true);
+
+            currentTool = EditorTool.AttackSelect;
+            UpdateCountUI();
+
+            int maxAttackTiles = GetMaxAttackTileCount();
+            Debug.Log($"공격 범위 지정 모드 전환 완료. (전체 픽셀: {totalPixels}개 / 지정 가능 공격 타일: {maxAttackTiles}개)");
+        }
+        // 2단계: 이미 공격 타일 지정 모드일 때 한 번 더 누르면 완료 및 저장 처리
+        else
+        {
+            OnClickCompleteAndSave();
+        }
+    }
+
+    /// <summary>
+    /// 공격 타일 지정 완료 후 데이터 저장 및 게임 씬 이동
+    /// </summary>
+    public void OnClickCompleteAndSave()
+    {
+        PixelArtData saveData = new PixelArtData();
+        BoundsInt bounds = pixelDrawTilemap.cellBounds;
+
+        foreach (Vector3Int pos in bounds.allPositionsWithin)
+        {
+            if (pixelDrawTilemap.HasTile(pos))
+            {
+                TileBase currentTile = pixelDrawTilemap.GetTile(pos);
+                PixelColor color = GetColorFromTile(currentTile);
+
+                PixelTileData tileData = new PixelTileData
+                {
+                    x = pos.x,
+                    y = pos.y,
+                    color = color,
+                    isAttackTile = attackTilePositions.Contains(pos)
+                };
+
+                saveData.tiles.Add(tileData);
+            }
         }
 
-        // 기존 에디터 툴 및 팔레트 UI 감추기
-        if (editorUIPanel != null) editorUIPanel.SetActive(false);
-        if (attackSelectUIPanel != null) attackSelectUIPanel.SetActive(true);
+        // JSON 파일 저장
+        PixelSaveSystem.SavePixelArt(saveData);
 
-        // 공격 범위 지정 모드로 전환
-        currentTool = EditorTool.AttackSelect;
-        UpdateCountUI();
-
-        Debug.Log($"공격 범위 지정 모드 전환 완료. (지정 가능 개수: {totalPixels}개)");
+        // 비동기 로딩으로 GameScene 이동
+        LoadingSceneManager.LoadScene("GameScene");
     }
 
     // ==========================================
@@ -333,6 +377,12 @@ public class PixelPainter : MonoBehaviour
         return count;
     }
 
+    private int GetMaxAttackTileCount()
+    {
+        int totalPixels = GetActualPlacedPixelCount();
+        return Mathf.RoundToInt(totalPixels / 4.0f);
+    }
+
     private bool IsFirstPixel() => GetActualPlacedPixelCount() == 0;
 
     private bool IsAdjacentToExistingPixel(Vector3Int cellPos)
@@ -375,11 +425,12 @@ public class PixelPainter : MonoBehaviour
 
         if (currentTool == EditorTool.AttackSelect)
         {
-            countInfoText.text = $"공격 타일 지정: {attackTilePositions.Count} / {currentCount}";
+            int maxAttackCount = GetMaxAttackTileCount();
+            countInfoText.text = $"공격 타일 지정: \n {attackTilePositions.Count} / {maxAttackCount}";
         }
         else
         {
-            countInfoText.text = $"설치된 픽셀: {currentCount} / {maxTotalBlocks} (최소 {minTotalBlocks}개)";
+            countInfoText.text = $"설치된 픽셀: \n {currentCount} / {maxTotalBlocks} (최소 {minTotalBlocks}개)";
         }
     }
 
@@ -394,6 +445,17 @@ public class PixelPainter : MonoBehaviour
             case PixelColor.Green: return greenTile;
             default: return null;
         }
+    }
+
+    private PixelColor GetColorFromTile(TileBase tile)
+    {
+        if (tile == blackTile) return PixelColor.Black;
+        if (tile == redTile) return PixelColor.Red;
+        if (tile == blueTile) return PixelColor.Blue;
+        if (tile == yellowTile) return PixelColor.Yellow;
+        if (tile == greenTile) return PixelColor.Green;
+
+        return PixelColor.Black;
     }
 
     private string GetColorNameKR(PixelColor color)

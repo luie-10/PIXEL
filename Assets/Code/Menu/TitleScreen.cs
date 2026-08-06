@@ -1,26 +1,32 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement; // ¾À ÀüÈ¯À» À§ÇØ ÇÊ¼ö ÀÛ¼º
 
 public class TitleScreenManager : MonoBehaviour
 {
-    [Header("ÃÊ±â ¼±ÅÃ ¹öÆ°")]
+    [Header("ì´ˆê¸° ì„ íƒ ë²„íŠ¼")]
     [SerializeField] private Button firstSelectedButton;
 
-    [Header("¾À ÀÌ¸§ ¼³Á¤")]
+    [Header("ì”¬ ì´ë¦„ ì„¤ì •")]
     [SerializeField] private string gameSceneName = "GameScene";
-    [SerializeField] private string creditSceneName = "CreditScene"; // ÀÌµ¿ÇÒ Å©·¹µ÷ ¾À ÀÌ¸§
+    [SerializeField] private string creditSceneName = "CreditScene";
+
+    [Header("UI ì—°ë™ ì°¸ì¡°")]
+    [SerializeField] private SettingsUI settingsUI;
 
     private void Start()
     {
-        // °ÔÀÓ ½ÃÀÛ ½Ã Ã¹ ¹øÂ° ¹öÆ°¿¡ Å°º¸µå/ÆĞµå Æ÷Ä¿½º ÁöÁ¤
         SetDefaultFocus();
+
+        // ì”¬ ì‹œì‘ ì‹œ SettingsUI ì°¸ì¡° ìƒíƒœ ë¯¸ë¦¬ ì ê²€
+        if (settingsUI == null)
+        {
+            Debug.LogError("[TitleScreenManager] ê²½ê³ : SettingsUI ìŠ¤í¬ë¦½íŠ¸ ì—°ê²°ì´ ëˆ„ë½ë˜ì—ˆìŠµë‹ˆë‹¤! Inspectorë¥¼ í™•ì¸í•´ì£¼ì„¸ìš”.");
+        }
     }
 
     private void Update()
     {
-        // Å°º¸µå ¹æÇâÅ°/WASD ÀÔ·ÂÀÌ ¹ß»ıÇß´Âµ¥ ÇöÀç ¾Æ¹« ¹öÆ°µµ ¼±ÅÃµÇ¾î ÀÖÁö ¾ÊÀ» ¶§ ÀçÆ÷Ä¿½º
         if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
         {
             if (Input.GetAxisRaw("Vertical") != 0 || Input.GetAxisRaw("Horizontal") != 0)
@@ -38,36 +44,41 @@ public class TitleScreenManager : MonoBehaviour
         }
     }
 
-    // --- ¹öÆ° Å¬¸¯ ÀÌº¥Æ® ¿¬°á ¸Ş¼­µå ---
-
-    // 1. °ÔÀÓ ½ÃÀÛ ¹öÆ°
     public void OnClickStartGame()
     {
-        Debug.Log("°ÔÀÓ ½ÃÀÛ!");
+        Debug.Log("[TitleScreenManager] 'ê²Œì„ ì‹œì‘' ë²„íŠ¼ í´ë¦­ë¨");
         LoadingSceneManager.LoadScene(gameSceneName);
     }
 
-    // 2. Å©·¹µ÷ ¹öÆ° (Ãß°¡µÊ)
     public void OnClickCredits()
     {
-        Debug.Log("Å©·¹µ÷ ¾ÀÀ¸·Î ÀÌµ¿");
+        Debug.Log("[TitleScreenManager] 'í¬ë ˆë”§' ë²„íŠ¼ í´ë¦­ë¨");
         LoadingSceneManager.LoadScene(creditSceneName);
     }
 
-    // 3. ¼³Á¤ ¹öÆ°
+    // âœ¨ ì„¤ì • ë²„íŠ¼ í´ë¦­ ì´ë²¤íŠ¸ (ë””ë²„ê·¸ ë¡œê·¸ í¬í•¨)
     public void OnClickOptions()
     {
-        Debug.Log("¼³Á¤ Ã¢ ¿­±â");
+        Debug.Log("[TitleScreenManager] 'ì„¤ì •' ë²„íŠ¼ ì´ë²¤íŠ¸ ì§„ì… ì™„ë£Œ");
+
+        if (settingsUI != null)
+        {
+            Debug.Log("[TitleScreenManager] settingsUI ì°¸ì¡° í™•ì¸ë¨. OpenPanel() í˜¸ì¶œ ì¤‘...");
+            settingsUI.OpenPanel();
+        }
+        else
+        {
+            Debug.LogError("[TitleScreenManager] ì˜¤ë¥˜: settingsUIê°€ null ìƒíƒœì…ë‹ˆë‹¤. TitleScreenManager ì¸ìŠ¤í™í„°ì˜ Settings UI ìŠ¬ë¡¯ì— ì˜¤ë¸Œì íŠ¸ë¥¼ ì—°ê²°í•´ì£¼ì„¸ìš”!");
+        }
     }
 
-    // 4. °ÔÀÓ Á¾·á ¹öÆ°
     public void OnClickExit()
     {
-        Debug.Log("°ÔÀÓ Á¾·á");
+        Debug.Log("[TitleScreenManager] 'ê²Œì„ ì¢…ë£Œ' ë²„íŠ¼ í´ë¦­ë¨");
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
-            Application.Quit();
+        Application.Quit();
 #endif
     }
 }
