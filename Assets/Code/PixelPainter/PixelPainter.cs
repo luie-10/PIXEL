@@ -54,6 +54,7 @@ public class PixelPainter : MonoBehaviour
     private Coroutine warningCoroutine;
     private Vector3 dragOrigin;
 
+    public string GAMESCENE = "1 _GAME"; // 게임 씬 이름
     // 공격 타일 저장을 위한 좌표 목록
     private HashSet<Vector3Int> attackTilePositions = new HashSet<Vector3Int>();
 
@@ -297,7 +298,7 @@ public class PixelPainter : MonoBehaviour
         PixelSaveSystem.SavePixelArt(saveData);
 
         // 비동기 로딩으로 GameScene 이동
-        LoadingSceneManager.LoadScene("GameScene");
+        LoadingSceneManager.LoadScene(GAMESCENE);
     }
 
     // ==========================================

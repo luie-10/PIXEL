@@ -46,8 +46,14 @@ public class RoundTimer : MonoBehaviour
             resultUIPanel.SetActive(false);
         }
 
-        // 0번째 라운드부터 시작
-        StartRoundByIndex(0);
+        // SettingsManager에 기존 라운드 기록이 있다면 해당 라운드부터 시작
+        int startIndex = 0;
+        if (SettingsManager.Instance != null)
+        {
+            startIndex = SettingsManager.Instance.CurrentRoundIndex;
+        }
+
+        StartRoundByIndex(startIndex);
     }
 
     private void Update()
@@ -84,6 +90,12 @@ public class RoundTimer : MonoBehaviour
         currentRoundIndex = index;
         currentTime = rounds[currentRoundIndex].roundTime;
         isTimerRunning = true;
+
+        // SettingsManager와 라운드 정보 동기화
+        if (SettingsManager.Instance != null)
+        {
+            SettingsManager.Instance.SetRoundIndex(currentRoundIndex);
+        }
 
         if (roundAnnounceText != null)
         {
