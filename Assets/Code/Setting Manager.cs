@@ -36,11 +36,20 @@ public class SettingsManager : MonoBehaviour
     }
 
     /// <summary>
-    /// RoundTimer 등에서 라운드가 시작될 때 라운드 인덱스를 설정합니다.
+    /// 라운드가 끝났을 때 다음 라운드로 진행시킵니다.
+    /// </summary>
+    public void NextRound()
+    {
+        currentRoundIndex++;
+        Debug.Log($"[SettingsManager] 다음 라운드로 진행: {CurrentRound}라운드 (Index: {currentRoundIndex})");
+    }
+
+    /// <summary>
+    /// 특정 라운드 인덱스로 직접 설정합니다.
     /// </summary>
     public void SetRoundIndex(int index)
     {
-        currentRoundIndex = index;
+        currentRoundIndex = Mathf.Max(0, index);
         Debug.Log($"[SettingsManager] 현재 라운드 설정됨: {CurrentRound}라운드 (Index: {currentRoundIndex})");
     }
 

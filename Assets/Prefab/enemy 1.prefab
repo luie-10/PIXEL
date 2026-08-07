@@ -150,7 +150,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.64, y: 0.64}
+    oldSize: {x: 0.53333336, y: 0.53333336}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -173,6 +173,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HP: 0.5
   speed: 1
-  colorBlock: 2
+  colorBlock: 3
   pixelEffectPrefab: {fileID: 1166481414921601221, guid: 212ab90c1e94fd24cb02dafc8b328d66, type: 3}
   changeDirectionInterval: 2

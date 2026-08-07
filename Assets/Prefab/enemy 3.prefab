@@ -101,7 +101,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HP: 0.5
   speed: 1
-  colorBlock: 4
+  colorBlock: 5
   pixelEffectPrefab: {fileID: 1166481414921601221, guid: bd9343a3ff9f72341bf1b5dc071784e3, type: 3}
   changeDirectionInterval: 2
 --- !u!50 &2096054120241633852
@@ -167,7 +167,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.64, y: 0.64}
+    oldSize: {x: 1.2307693, y: 1.2307693}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0

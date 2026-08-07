@@ -47,9 +47,15 @@ public class TitleScreenManager : MonoBehaviour
     public void OnClickStartGame()
     {
         Debug.Log("[TitleScreenManager] '게임 시작' 버튼 클릭됨");
+        PixelSaveSystem.DeleteSaveData();
+        // 게임을 처음 시작할 때는 라운드를 1라운드로 초기화
+        if (SettingsManager.Instance != null)
+        {
+            SettingsManager.Instance.ResetRound();
+        }
+
         LoadingSceneManager.LoadScene(gameSceneName);
     }
-
     public void OnClickCredits()
     {
         Debug.Log("[TitleScreenManager] '크레딧' 버튼 클릭됨");

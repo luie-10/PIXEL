@@ -3,7 +3,21 @@ guid: 5135572eadbae6e40b6afb717ad0f224
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - pixelDrawTilemap: {instanceID: 0}
+  - attackRangeTilemap: {instanceID: 0}
+  - blackTile: {fileID: 11400000, guid: c6ed1f4da57468940960a60091f81fcf, type: 2}
+  - redTile: {fileID: 11400000, guid: fe1a6770e9adbd44ebf0f4495c3a3623, type: 2}
+  - blueTile: {fileID: 11400000, guid: 3b1e1237597d51341b0dea7166335949, type: 2}
+  - yellowTile: {fileID: 11400000, guid: e31b1811c556f594e8816c0e38a9cb62, type: 2}
+  - greenTile: {fileID: 11400000, guid: 432174fd57312c044986ba792067d242, type: 2}
+  - attackTile: {fileID: 11400000, guid: 7a93382ac90f8f84c93ec879ae51d55a, type: 2}
+  - mainCamera: {instanceID: 0}
+  - editorUIPanel: {instanceID: 0}
+  - attackSelectUIPanel: {instanceID: 0}
+  - paletteUI: {instanceID: 0}
+  - warningText: {instanceID: 0}
+  - countInfoText: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

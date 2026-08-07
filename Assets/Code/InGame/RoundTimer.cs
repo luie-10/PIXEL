@@ -1,221 +1,212 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
-
-[System.Serializable]
-public class RoundData
-{
-    public int roundNumber = 1;      // ¶ó¿îµå ¹øÈ£
-    public float roundTime = 60f;    // ÇØ´ç ¶ó¿îµåÀÇ Á¦ÇÑ½Ã°£(ÃÊ)
-}
 
 public class RoundTimer : MonoBehaviour
 {
-    [Header("Round Settings (Array)")]
-    public RoundData[] rounds;
-    private int currentRoundIndex = 0;
+    [Header("ì‹œê°„ ì„¤ì •")]
+    [Tooltip("ê° ë¼ìš´ë“œë³„ ì œí•œ ì‹œê°„(ì´ˆ)ì„ ì„¤ì •í•©ë‹ˆë‹¤.")]
+    [SerializeField] private float[] roundDurations = new float[] { 60f, 75f, 90f, 120f };
+    [SerializeField] private float defaultDuration = 60f;
 
-    [Header("UI References")]
-    public TextMeshProUGUI timerText;
-    public TextMeshProUGUI roundAnnounceText;
-
-    [Header("Announce Animation Settings")]
-    public float animationDuration = 1.5f;
-    public float startScale = 1.0f;
-    public float endScale = 1.8f;
-
-    [Header("Result UI & Hide Settings")]
-    [Tooltip("¶ó¿îµå Á¾·á ½Ã ¼û±æ ÀÎ°ÔÀÓ UI ¿ÀºêÁ§Æ® ¸ñ·Ï")]
-    public GameObject[] uiToHide;
-    [Tooltip("¶ó¿îµå Á¾·á ½Ã È°¼ºÈ­ÇÒ °á°ú Ã¢ ÆĞ³Î")]
-    public GameObject resultUIPanel;
-    [Tooltip("°á°ú ÇÕ»ê ¹× ¿ä¾àÀ» ÇÑ ÁÙ¾¿ Ãâ·ÂÇÒ ÅØ½ºÆ® UI")]
-    public TextMeshProUGUI resultSummaryText;
-
-    [Header("Enemy Management Settings")]
-    [Tooltip("ÇÊµåÀÇ Àû ÅÂ±× ÀÌ¸§ (±âº»°ª: Enemy)")]
-    public string enemyTag = "Enemy";
-
-    private float currentTime;
+    private float roundDuration;
+    private float currentTimer;
     private bool isTimerRunning = false;
+
+    [Header("UI ì—°ê²°")]
+    [SerializeField] private TextMeshProUGUI timerText;       // ë‚¨ì€ ì‹œê°„ í…ìŠ¤íŠ¸ (ì˜ˆ: 01:00)
+    [SerializeField] private Slider timerSlider;            // ë‚¨ì€ ì‹œê°„ ìŠ¬ë¼ì´ë”
+
+    // âœ¨ ë¼ìš´ë“œ ìˆ«ìë§Œ í‘œì‹œí•  í…ìŠ¤íŠ¸ ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
+    [Tooltip("í˜„ì¬ ë¼ìš´ë“œ ìˆ«ìë§Œ í‘œì‹œë˜ëŠ” í…ìŠ¤íŠ¸ (ì˜ˆ: 1, 2, 3...)")]
+    [SerializeField] private TextMeshProUGUI roundNumberText;
+
+    [SerializeField] private TextMeshProUGUI waveText;        // WAVE ì• ë‹ˆë©”ì´ì…˜ ì—°ì¶œìš© í…ìŠ¤íŠ¸
+    [SerializeField] private TextMeshProUGUI summaryText;     // ê²°ê³¼ ì°½ í…ìŠ¤íŠ¸
+    [SerializeField] private GameObject resultPanel;         // ê²°ê³¼ íŒ¨ë„
+
+    [Header("ìŠ¤í° ë° ì  ê´€ë¦¬")]
+    [SerializeField] private SpawnManager spawnManager;
 
     private void Start()
     {
-        if (resultUIPanel != null)
+        InitializeRound();
+    }
+
+    /// <summary>
+    /// ë¼ìš´ë“œ ì‹œì‘ ë° UI/íƒ€ì´ë¨¸ ì´ˆê¸°í™”
+    /// </summary>
+    public void InitializeRound()
+    {
+        isTimerRunning = false;
+
+        // 1. ì´ë²ˆ ë¼ìš´ë“œ íšë“ í”½ì…€ ë°ì´í„° ì´ˆê¸°í™”
+        if (GameManager.Instance != null)
         {
-            resultUIPanel.SetActive(false);
+            GameManager.Instance.ResetCurrentRoundBlocks();
         }
 
-        // SettingsManager¿¡ ±âÁ¸ ¶ó¿îµå ±â·ÏÀÌ ÀÖ´Ù¸é ÇØ´ç ¶ó¿îµåºÎÅÍ ½ÃÀÛ
-        int startIndex = 0;
+        // 2. SettingsManagerì—ì„œ ìµœì‹  ë¼ìš´ë“œ ì •ë³´ ì½ê¸°
+        int currentRound = 1;
+        int roundIndex = 0;
+
         if (SettingsManager.Instance != null)
         {
-            startIndex = SettingsManager.Instance.CurrentRoundIndex;
+            currentRound = SettingsManager.Instance.CurrentRound;          // 1ë¶€í„° ì‹œì‘ (1, 2, 3...)
+            roundIndex = SettingsManager.Instance.CurrentRoundIndex;    // 0ë¶€í„° ì‹œì‘ (0, 1, 2...)
         }
 
-        StartRoundByIndex(startIndex);
+        // âœ¨ 3. ë¼ìš´ë“œ ìˆ«ì UI ê°±ì‹  (ìˆ«ìë§Œ ì¶œë ¥)
+        if (roundNumberText != null)
+        {
+            roundNumberText.text = currentRound.ToString();
+        }
+
+        // 4. ë¼ìš´ë“œ ì œí•œì‹œê°„ ì„¤ì •
+        if (roundDurations != null && roundDurations.Length > 0)
+        {
+            if (roundIndex < roundDurations.Length)
+            {
+                roundDuration = roundDurations[roundIndex];
+            }
+            else
+            {
+                roundDuration = roundDurations[roundDurations.Length - 1];
+            }
+        }
+        else
+        {
+            roundDuration = defaultDuration;
+        }
+
+        // 5. íƒ€ì´ë¨¸ UI ê°±ì‹ 
+        currentTimer = roundDuration;
+        UpdateTimerUI();
+
+        // 6. WAVE ì»¤ì§€ëŠ” ì• ë‹ˆë©”ì´ì…˜ ì—°ì¶œ í…ìŠ¤íŠ¸ ì„¤ì • (ì„ íƒ ì‚¬í•­)
+        if (waveText != null)
+        {
+            waveText.text = $"WAVE {currentRound}";
+            StartCoroutine(CoPlayWaveAnimation());
+        }
+
+        // 7. UI ë° ìŠ¤í° ë§¤ë‹ˆì € ì´ˆê¸°í™”
+        if (resultPanel != null) resultPanel.SetActive(false);
+        if (spawnManager != null) spawnManager.enabled = true;
+
+        isTimerRunning = true;
     }
 
     private void Update()
     {
         if (!isTimerRunning) return;
 
-        if (currentTime > 0)
+        currentTimer -= Time.deltaTime;
+
+        if (currentTimer <= 0f)
         {
-            currentTime -= Time.deltaTime;
-            UpdateTimerText(currentTime);
+            currentTimer = 0f;
+            UpdateTimerUI();
+            OnRoundEnd();
         }
         else
         {
-            currentTime = 0;
-            UpdateTimerText(currentTime);
-            OnRoundEnd();
+            UpdateTimerUI();
         }
     }
 
-    public void StartRoundByIndex(int index)
+    private void UpdateTimerUI()
     {
-        if (rounds == null || rounds.Length == 0)
+        if (timerText != null)
         {
-            Debug.LogWarning("RoundTimer: ¶ó¿îµå µ¥ÀÌÅÍ°¡ ¼³Á¤µÇÁö ¾Ê¾Ò½À´Ï´Ù.");
-            return;
+            int minutes = Mathf.FloorToInt(currentTimer / 60f);
+            int seconds = Mathf.FloorToInt(currentTimer % 60f);
+            timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
         }
 
-        if (index < 0 || index >= rounds.Length)
+        if (timerSlider != null)
         {
-            Debug.Log("¸ğµç ¶ó¿îµå°¡ ¿Ï·áµÇ¾ú°Å³ª Àß¸øµÈ ¶ó¿îµå ÀÎµ¦½ºÀÔ´Ï´Ù.");
-            return;
-        }
-
-        currentRoundIndex = index;
-        currentTime = rounds[currentRoundIndex].roundTime;
-        isTimerRunning = true;
-
-        // SettingsManager¿Í ¶ó¿îµå Á¤º¸ µ¿±âÈ­
-        if (SettingsManager.Instance != null)
-        {
-            SettingsManager.Instance.SetRoundIndex(currentRoundIndex);
-        }
-
-        if (roundAnnounceText != null)
-        {
-            StartCoroutine(ShowRoundAnnounceRoutine());
+            timerSlider.value = currentTimer / roundDuration;
         }
     }
 
-    private IEnumerator ShowRoundAnnounceRoutine()
+    private IEnumerator CoPlayWaveAnimation()
     {
-        roundAnnounceText.gameObject.SetActive(true);
-        roundAnnounceText.text = $"{rounds[currentRoundIndex].roundNumber} WAVE";
+        if (waveText == null) yield break;
 
-        Vector3 initialScale = Vector3.one * startScale;
-        Vector3 targetScale = Vector3.one * endScale;
+        waveText.gameObject.SetActive(true);
+        Transform textTransform = waveText.transform;
 
-        Color baseColor = roundAnnounceText.color;
+        float duration = 1.5f;
+        float elapsed = 0f;
 
-        float elapsedTime = 0f;
+        Vector3 startScale = Vector3.one * 0.5f;
+        Vector3 targetScale = Vector3.one * 1.2f;
 
-        while (elapsedTime < animationDuration)
+        while (elapsed < duration)
         {
-            elapsedTime += Time.deltaTime;
-            float progress = elapsedTime / animationDuration;
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
 
-            roundAnnounceText.transform.localScale = Vector3.Lerp(initialScale, targetScale, progress);
-
-            float alpha = Mathf.Lerp(1f, 0f, progress);
-            roundAnnounceText.color = new Color(baseColor.r, baseColor.g, baseColor.b, alpha);
-
+            textTransform.localScale = Vector3.Lerp(startScale, targetScale, t);
             yield return null;
         }
 
-        roundAnnounceText.color = new Color(baseColor.r, baseColor.g, baseColor.b, 1f);
-        roundAnnounceText.transform.localScale = initialScale;
-        roundAnnounceText.gameObject.SetActive(false);
-    }
-
-    private void UpdateTimerText(float timeToDisplay)
-    {
-        if (timerText == null) return;
-
-        if (timeToDisplay < 0) timeToDisplay = 0;
-
-        int minutes = Mathf.FloorToInt(timeToDisplay / 60);
-        int seconds = Mathf.FloorToInt(timeToDisplay % 60);
-
-        timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+        waveText.gameObject.SetActive(false);
     }
 
     private void OnRoundEnd()
     {
         isTimerRunning = false;
 
-        UpdateTimerText(0f);
+        if (spawnManager != null) spawnManager.enabled = false;
 
-        StopSpawningAndClearEnemies();
+        Enemy[] remainingEnemies = FindObjectsOfType<Enemy>();
+        foreach (Enemy enemy in remainingEnemies)
+        {
+            Destroy(enemy.gameObject);
+        }
 
         if (GameManager.Instance != null)
         {
             GameManager.Instance.SaveCurrentRoundData();
         }
 
-        HideInGameUI();
-
-        ShowResultUI();
-    }
-
-    private void StopSpawningAndClearEnemies()
-    {
-        SpawnManager spawnManager = FindObjectOfType<SpawnManager>();
-        if (spawnManager != null)
+        if (resultPanel != null)
         {
-            spawnManager.enabled = false;
-        }
+            resultPanel.SetActive(true);
 
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag(enemyTag);
-        for (int i = 0; i < enemies.Length; i++)
-        {
-            Destroy(enemies[i]);
-        }
-    }
-
-    private void HideInGameUI()
-    {
-        if (uiToHide == null) return;
-
-        for (int i = 0; i < uiToHide.Length; i++)
-        {
-            if (uiToHide[i] != null)
+            if (summaryText != null)
             {
-                uiToHide[i].SetActive(false);
+                summaryText.gameObject.SetActive(true);
+
+                if (GameManager.Instance != null)
+                {
+                    summaryText.text = "ê²°ê³¼ ê³„ì‚° ì¤‘...";
+                    StartCoroutine(GameManager.Instance.ShowSummaryTextLineByLine(summaryText));
+                }
             }
         }
     }
 
-    private void ShowResultUI()
+    public void OnClickNextRoundButton()
     {
-        if (resultUIPanel != null)
+        if (SettingsManager.Instance != null)
         {
-            resultUIPanel.SetActive(true);
+            SettingsManager.Instance.NextRound();
         }
 
-        if (resultSummaryText != null && GameManager.Instance != null)
-        {
-            StartCoroutine(GameManager.Instance.ShowSummaryTextLineByLine(resultSummaryText));
-        }
+        LoadingSceneManager.LoadScene("2_CARD SLECT");
     }
 
-    /// <summary>
-    /// ´ÙÀ½ ¶ó¿îµå·Î ÁøÇàÇÒ ¶§ È£ÃâÇÒ ÇÔ¼ö (¹öÆ° µî¿¡ ¿¬°á)
-    /// </summary>
-    public void GoToNextRound()
+    public void OnClickMainMenuButton()
     {
-        if (currentRoundIndex + 1 < rounds.Length)
+        if (SettingsManager.Instance != null)
         {
-            StartRoundByIndex(currentRoundIndex + 1);
+            SettingsManager.Instance.ResetRound();
         }
-        else
-        {
-            Debug.Log("¸ğµç ¶ó¿îµå°¡ ³¡³µ½À´Ï´Ù!");
-        }
+
+        LoadingSceneManager.LoadScene("0_Title");
     }
 }

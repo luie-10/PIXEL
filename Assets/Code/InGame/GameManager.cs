@@ -43,7 +43,19 @@ public class GameManager : MonoBehaviour
         totalSavedBlocks[PixelColor.Yellow] = 0;
         totalSavedBlocks[PixelColor.Green] = 0;
     }
-    // GameManager 클래스 내부 추가 메소드
+
+    /// <summary>
+    /// ✨ 새로운 라운드가 시작될 때 이번 라운드 획득 픽셀 수량을 0으로 초기화합니다.
+    /// </summary>
+    public void ResetCurrentRoundBlocks()
+    {
+        collectedBlocks[PixelColor.Red] = 0;
+        collectedBlocks[PixelColor.Blue] = 0;
+        collectedBlocks[PixelColor.Yellow] = 0;
+        collectedBlocks[PixelColor.Green] = 0;
+        Debug.Log("[GameManager] 이번 라운드 획득 데이터 초기화 완료");
+    }
+
     public void UsePixel(PixelColor color, int amount = 1)
     {
         if (color == PixelColor.Black || color == PixelColor.None) return;
@@ -54,6 +66,7 @@ public class GameManager : MonoBehaviour
             if (totalSavedBlocks[color] < 0) totalSavedBlocks[color] = 0;
         }
     }
+
     public void AddBlock(PixelColor color, int amount = 1)
     {
         if (color == PixelColor.None) return;
@@ -100,52 +113,62 @@ public class GameManager : MonoBehaviour
 
     public IEnumerator ShowSummaryTextLineByLine(TextMeshProUGUI targetText)
     {
-        if (targetText == null) yield break;
-
-        // 결과 버튼이 지정되어 있다면 연출 시작 시 비활성화
-        if (resultButton != null)
+        // ✨ try ~ finally 블록: 중간에 탈출하거나 에러가 발생해도 finally 절은 무조건 실행됩니다.
+        try
         {
-            resultButton.SetActive(false);
+            if (resultButton != null)
+            {
+                resultButton.SetActive(false);
+            }
+
+            if (targetText == null)
+            {
+                Debug.LogError("[GameManager] ShowSummaryTextLineByLine: targetText가 인스펙터에 할당되지 않았습니다.");
+                yield break;
+            }
+
+            targetText.text = "";
+            targetText.gameObject.SetActive(true);
+
+            int roundTotal = 0;
+            foreach (var val in collectedBlocks.Values)
+            {
+                roundTotal += val;
+            }
+
+            int grandTotal = 0;
+            foreach (var val in totalSavedBlocks.Values)
+            {
+                grandTotal += val;
+            }
+
+            string[] lines = new string[]
+            {
+                "[ 이번 라운드 획득 ]",
+                $"RED : {GetBlockCount(PixelColor.Red)}",
+                $"BLUE : {GetBlockCount(PixelColor.Blue)}",
+                $"YELLOW : {GetBlockCount(PixelColor.Yellow)}",
+                $"GREEN : {GetBlockCount(PixelColor.Green)}",
+                $"라운드 합계 : {roundTotal}개",
+                "",
+                "-----------------------",
+                "[ 총 보유 누적 픽셀 ]",
+                $"총합 : {grandTotal}개"
+            };
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                targetText.text += lines[i] + "\n";
+                yield return new WaitForSeconds(lineDelay);
+            }
         }
-
-        targetText.text = "";
-        targetText.gameObject.SetActive(true);
-        int roundTotal = 0;
-        foreach (var val in collectedBlocks.Values)
+        finally
         {
-            roundTotal += val;
-        }
-
-        int grandTotal = 0;
-        foreach (var val in totalSavedBlocks.Values)
-        {
-            grandTotal += val;
-        }
-
-        string[] lines = new string[]
-        {
-            "[ 이번 라운드 획득 ]",
-            $"RED : {GetBlockCount(PixelColor.Red)}",
-            $"BLUE : {GetBlockCount(PixelColor.Blue)}",
-            $"YELLOW : {GetBlockCount(PixelColor.Yellow)}",
-            $"GREEN : {GetBlockCount(PixelColor.Green)}",
-            $"라운드 합계 : {roundTotal}개",
-            "",
-            "-----------------------",
-            "[ 총 보유 누적 픽셀 ]",
-            $"총합 : {grandTotal}개"
-        };
-
-        for (int i = 0; i < lines.Length; i++)
-        {
-            targetText.text += lines[i] + "\n";
-            yield return new WaitForSeconds(lineDelay);
-        }
-
-        // 텍스트 연출이 끝난 후 버튼 활성화
-        if (resultButton != null)
-        {
-            resultButton.SetActive(true);
+            // ✨ 텍스트 연출이 정상 종료되었든, 에러로 중간 탈출했든 무조건 버튼 활성화!
+            if (resultButton != null)
+            {
+                resultButton.SetActive(true);
+            }
         }
     }
 }
