@@ -1,34 +1,65 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(100)]
 public class PlayerPixelArtSpawner : MonoBehaviour
 {
-    [Header("Sprite Display")]
-    [Tooltip("플레이어 외형을 표시하는 SpriteRenderer입니다. 비어 있으면 자동 탐색합니다.")]
-    [SerializeField] private SpriteRenderer spriteRenderer;
+    public enum PivotPosition
+    {
+        Center,         // 중앙 정렬
+        BottomCenter,   // 발밑(하단 중앙) 정렬
+        TopLeft         // 좌상단 정렬
+    }
 
-    [Header("Sprite Settings")]
-    [SerializeField, Min(0.01f)] private float pixelsPerUnit = 16f;
+    public enum ColorApplyMode
+    {
+        SpriteRendererColor,   // SpriteRenderer의 color 속성 직접 변경
+        MaterialPropertyBlock  // 드로우콜 최적화를 위한 MaterialPropertyBlock 사용
+    }
+
+    [Header("Prefab & Parent Settings")]
+    [Tooltip("배치할 도트 오브젝트 프리팹입니다. (SpriteRenderer가 붙어있어야 합니다)")]
+    [SerializeField] private GameObject tilePrefab;
+
+    [Tooltip("생성된 도트 타일들이 배치될 부모 Transform입니다. 비어있으면 현재 오브젝트가 부모가 됩니다.")]
+    [SerializeField] private Transform tilesParent;
+
+    [Header("Transform & Layout Settings")]
+    [Tooltip("각 타일 오브젝트의 기본 크기입니다.")]
+    [SerializeField] private Vector2 tileSize = Vector2.one;
+
+    [Tooltip("타일과 타일 사이의 간격입니다.")]
+    [SerializeField] private Vector2 tileSpacing = Vector2.zero;
+
+    [Tooltip("전체 픽셀아트의 기준점(Pivot) 위치입니다.")]
+    [SerializeField] private PivotPosition pivotPosition = PivotPosition.Center;
 
     [Tooltip("체크하면 저장된 그림의 위아래가 반전됩니다.")]
     [SerializeField] private bool flipY;
 
-    [Header("Tile Colors")]
+    [Header("Color Settings")]
+    [SerializeField] private ColorApplyMode colorMode = ColorApplyMode.SpriteRendererColor;
     [SerializeField] private Color blackColor = Color.black;
     [SerializeField] private Color redColor = Color.red;
     [SerializeField] private Color blueColor = Color.blue;
     [SerializeField] private Color yellowColor = Color.yellow;
     [SerializeField] private Color greenColor = Color.green;
 
-    private Texture2D generatedTexture;
-    private Sprite generatedSprite;
+    // 생성된 타일 오브젝트 관리 리스트
+    private readonly List<GameObject> spawnedTiles = new List<GameObject>();
     private Coroutine buildCoroutine;
+    private MaterialPropertyBlock propertyBlock;
 
     private void Awake()
     {
-        FindTargetRenderer();
+        if (tilesParent == null)
+        {
+            tilesParent = transform;
+        }
+
+        propertyBlock = new MaterialPropertyBlock();
     }
 
     private void OnEnable()
@@ -43,23 +74,16 @@ public class PlayerPixelArtSpawner : MonoBehaviour
 
     private IEnumerator BuildAfterSceneInitialization()
     {
-        // 게임 씬의 다른 초기화 코드가 끝난 뒤 적용합니다.
         yield return null;
-
         BuildAndApplySprite();
-
         buildCoroutine = null;
     }
 
     public bool BuildAndApplySprite()
     {
-        if (!FindTargetRenderer())
+        if (tilePrefab == null)
         {
-            Debug.LogError(
-                "[PlayerPixelArtSpawner] 플레이어 하위에서 SpriteRenderer를 찾지 못했습니다.",
-                this
-            );
-
+            Debug.LogError("[PlayerPixelArtSpawner] Tile Prefab이 지정되지 않았습니다.", this);
             return false;
         }
 
@@ -67,35 +91,26 @@ public class PlayerPixelArtSpawner : MonoBehaviour
 
         if (loadedData == null)
         {
-            Debug.LogError(
-                "[PlayerPixelArtSpawner] PixelArtData를 불러오지 못했습니다.",
-                this
-            );
-
+            Debug.LogError("[PlayerPixelArtSpawner] PixelArtData를 불러오지 못했습니다.", this);
             return false;
         }
 
         if (loadedData.tiles == null || loadedData.tiles.Count == 0)
         {
-            Debug.LogError(
-                "[PlayerPixelArtSpawner] JSON은 존재하지만 저장된 타일이 없습니다.",
-                this
-            );
-
+            Debug.LogError("[PlayerPixelArtSpawner] JSON은 존재하지만 저장된 타일이 없습니다.", this);
             return false;
         }
 
-        int minX = int.MaxValue;
-        int maxX = int.MinValue;
-        int minY = int.MaxValue;
-        int maxY = int.MinValue;
+        // 1. 기존에 생성된 타일들 제거
+        ClearSpawnedTiles();
+
+        // 2. 바운드(최소/최대 좌표) 계산
+        int minX = int.MaxValue, maxX = int.MinValue;
+        int minY = int.MaxValue, maxY = int.MinValue;
 
         foreach (PixelTileData tile in loadedData.tiles)
         {
-            if (tile == null)
-            {
-                continue;
-            }
+            if (tile == null) continue;
 
             minX = Mathf.Min(minX, tile.x);
             maxX = Mathf.Max(maxX, tile.x);
@@ -103,273 +118,138 @@ public class PlayerPixelArtSpawner : MonoBehaviour
             maxY = Mathf.Max(maxY, tile.y);
         }
 
-        if (
-            minX == int.MaxValue ||
-            maxX == int.MinValue ||
-            minY == int.MaxValue ||
-            maxY == int.MinValue
-        )
+        if (minX == int.MaxValue || maxX == int.MinValue || minY == int.MaxValue || maxY == int.MinValue)
         {
-            Debug.LogError(
-                "[PlayerPixelArtSpawner] 유효한 타일 좌표가 없습니다.",
-                this
-            );
-
+            Debug.LogError("[PlayerPixelArtSpawner] 유효한 타일 좌표가 없습니다.", this);
             return false;
         }
 
         int width = maxX - minX + 1;
         int height = maxY - minY + 1;
 
-        if (width <= 0 || height <= 0)
-        {
-            Debug.LogError(
-                $"[PlayerPixelArtSpawner] 잘못된 텍스처 크기입니다: {width}x{height}",
-                this
-            );
+        // 3. 간격을 포함한 타일 스텝(Step) 계산
+        Vector2 step = new Vector2(tileSize.x + tileSpacing.x, tileSize.y + tileSpacing.y);
 
-            return false;
-        }
-
-        ReleaseGeneratedResources();
-
-        generatedTexture = new Texture2D(
-            width,
-            height,
-            TextureFormat.RGBA32,
-            false
-        )
-        {
-            name = "GeneratedPlayerPixelTexture",
-            filterMode = FilterMode.Point,
-            wrapMode = TextureWrapMode.Clamp
-        };
-
-        Color[] clearPixels = new Color[width * height];
-
-        for (int i = 0; i < clearPixels.Length; i++)
-        {
-            clearPixels[i] = Color.clear;
-        }
-
-        generatedTexture.SetPixels(clearPixels);
+        // 4. 피벗(Pivot) 기준점에 따른 오프셋 계산
+        Vector2 pivotOffset = CalculatePivotOffset(width, height, step);
 
         int appliedTileCount = 0;
 
+        // 5. 오브젝트 생성 및 배치
         foreach (PixelTileData tile in loadedData.tiles)
         {
-            if (tile == null)
-            {
-                continue;
-            }
+            if (tile == null) continue;
 
-            int textureX = tile.x - minX;
-            int textureY = tile.y - minY;
+            int localX = tile.x - minX;
+            int localY = tile.y - minY;
 
             if (flipY)
             {
-                textureY = height - 1 - textureY;
+                localY = height - 1 - localY;
             }
 
-            if (
-                textureX < 0 ||
-                textureX >= width ||
-                textureY < 0 ||
-                textureY >= height
-            )
-            {
-                Debug.LogWarning(
-                    $"[PlayerPixelArtSpawner] 범위 밖 타일을 건너뜁니다: " +
-                    $"원본 ({tile.x}, {tile.y}), 변환 ({textureX}, {textureY})",
-                    this
-                );
-
-                continue;
-            }
-
-            generatedTexture.SetPixel(
-                textureX,
-                textureY,
-                GetColorByEnum(tile.color)
+            // 로컬 위치 계산
+            Vector3 localPosition = new Vector3(
+                (localX * step.x) + pivotOffset.x,
+                (localY * step.y) + pivotOffset.y,
+                0f
             );
 
+            // 타일 오브젝트 생성
+            GameObject tileObj = Instantiate(tilePrefab, tilesParent);
+            tileObj.transform.localPosition = localPosition;
+            tileObj.transform.localScale = new Vector3(tileSize.x, tileSize.y, 1f);
+
+            // 색상 적용
+            ApplyColorToTile(tileObj, GetColorByEnum(tile.color));
+
+            spawnedTiles.Add(tileObj);
             appliedTileCount++;
         }
 
-        generatedTexture.Apply(false, false);
-
-        generatedSprite = Sprite.Create(
-            generatedTexture,
-            new Rect(0f, 0f, width, height),
-            new Vector2(0.5f, 0.5f),
-            pixelsPerUnit
-        );
-
-        generatedSprite.name = "GeneratedPlayerPixelSprite";
-
-        spriteRenderer.sprite = generatedSprite;
-        spriteRenderer.color = Color.white;
-        spriteRenderer.enabled = true;
-
-        Debug.Assert(
-            spriteRenderer.sprite == generatedSprite,
-            "[PlayerPixelArtSpawner] 생성 Sprite가 Renderer에 할당되지 않았습니다.",
-            this
-        );
-
         Debug.Log(
-            $"[PlayerPixelArtSpawner] 적용 완료\n" +
-            $"대상: {GetHierarchyPath(spriteRenderer.transform)}\n" +
-            $"저장 타일: {loadedData.tiles.Count}개\n" +
-            $"적용 타일: {appliedTileCount}개\n" +
-            $"텍스처 크기: {width}x{height}\n" +
-            $"Pixels Per Unit: {pixelsPerUnit}",
+            $"[PlayerPixelArtSpawner] 오브젝트 생성 완료\n" +
+            $"부모 대상: {tilesParent.name}\n" +
+            $"생성된 타일 수: {appliedTileCount}개\n" +
+            $"전체 크기: {width}x{height}",
             this
         );
-
-        WarnIfAnimatorCanOverwriteSprite();
 
         return true;
     }
 
-    private bool FindTargetRenderer()
+    private Vector2 CalculatePivotOffset(int width, int height, Vector2 step)
     {
-        if (spriteRenderer != null)
+        // 전체 도트 영역의 가로/세로 길이 (마지막 타일의 크기 고려)
+        float totalWidth = (width - 1) * step.x;
+        float totalHeight = (height - 1) * step.y;
+
+        switch (pivotPosition)
         {
-            return true;
+            case PivotPosition.Center:
+                return new Vector2(-totalWidth * 0.5f, -totalHeight * 0.5f);
+
+            case PivotPosition.BottomCenter:
+                return new Vector2(-totalWidth * 0.5f, 0f);
+
+            case PivotPosition.TopLeft:
+                return new Vector2(0f, -totalHeight);
+
+            default:
+                return Vector2.zero;
         }
-
-        spriteRenderer = GetComponent<SpriteRenderer>();
-
-        if (spriteRenderer != null)
-        {
-            return true;
-        }
-
-        SpriteRenderer[] renderers =
-            GetComponentsInChildren<SpriteRenderer>(true);
-
-        if (renderers.Length == 0)
-        {
-            return false;
-        }
-
-        // 가능하면 현재 활성화된 Renderer를 우선 선택합니다.
-        foreach (SpriteRenderer rendererCandidate in renderers)
-        {
-            if (
-                rendererCandidate != null &&
-                rendererCandidate.gameObject.activeInHierarchy
-            )
-            {
-                spriteRenderer = rendererCandidate;
-                break;
-            }
-        }
-
-        if (spriteRenderer == null)
-        {
-            spriteRenderer = renderers[0];
-        }
-
-        if (renderers.Length > 1)
-        {
-            Debug.LogWarning(
-                $"[PlayerPixelArtSpawner] SpriteRenderer가 {renderers.Length}개입니다. " +
-                $"현재 선택된 대상: {GetHierarchyPath(spriteRenderer.transform)}\n" +
-                "잘못된 Renderer가 선택되면 인스펙터의 Sprite Renderer에 직접 연결하세요.",
-                this
-            );
-        }
-
-        return spriteRenderer != null;
     }
 
-    private void WarnIfAnimatorCanOverwriteSprite()
+    private void ApplyColorToTile(GameObject tileObj, Color color)
     {
-        Animator animator =
-            spriteRenderer.GetComponent<Animator>();
-
-        if (animator == null)
-        {
-            animator =
-                spriteRenderer.GetComponentInParent<Animator>();
-        }
-
-        if (animator == null || !animator.enabled)
+        if (!tileObj.TryGetComponent<SpriteRenderer>(out var sr))
         {
             return;
         }
 
-        Debug.LogWarning(
-            "[PlayerPixelArtSpawner] 적용 대상에 활성화된 Animator가 있습니다. " +
-            "애니메이션 클립이 SpriteRenderer.sprite를 제어하면 생성한 도트가 다시 덮어써질 수 있습니다.",
-            spriteRenderer
-        );
+        if (colorMode == ColorApplyMode.SpriteRendererColor)
+        {
+            sr.color = color;
+        }
+        else if (colorMode == ColorApplyMode.MaterialPropertyBlock)
+        {
+            sr.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetColor("_Color", color);
+            sr.SetPropertyBlock(propertyBlock);
+        }
     }
 
     private Color GetColorByEnum(PixelColor color)
     {
         switch (color)
         {
-            case PixelColor.Red:
-                return redColor;
-
-            case PixelColor.Blue:
-                return blueColor;
-
-            case PixelColor.Yellow:
-                return yellowColor;
-
-            case PixelColor.Green:
-                return greenColor;
-
+            case PixelColor.Red: return redColor;
+            case PixelColor.Blue: return blueColor;
+            case PixelColor.Yellow: return yellowColor;
+            case PixelColor.Green: return greenColor;
             case PixelColor.Black:
-            default:
-                return blackColor;
+            default: return blackColor;
         }
     }
 
-    private string GetHierarchyPath(Transform target)
+    private void ClearSpawnedTiles()
     {
-        if (target == null)
+        for (int i = 0; i < spawnedTiles.Count; i++)
         {
-            return "(null)";
-        }
-
-        string path = target.name;
-        Transform parent = target.parent;
-
-        while (parent != null)
-        {
-            path = $"{parent.name}/{path}";
-            parent = parent.parent;
-        }
-
-        return path;
-    }
-
-    private void ReleaseGeneratedResources()
-    {
-        if (generatedSprite != null)
-        {
-            if (
-                spriteRenderer != null &&
-                spriteRenderer.sprite == generatedSprite
-            )
+            if (spawnedTiles[i] != null)
             {
-                spriteRenderer.sprite = null;
+#if UNITY_EDITOR
+                if (!Application.isPlaying)
+                {
+                    DestroyImmediate(spawnedTiles[i]);
+                    continue;
+                }
+#endif
+                Destroy(spawnedTiles[i]);
             }
-
-            Destroy(generatedSprite);
-            generatedSprite = null;
         }
 
-        if (generatedTexture != null)
-        {
-            Destroy(generatedTexture);
-            generatedTexture = null;
-        }
+        spawnedTiles.Clear();
     }
 
     private void OnDisable()
@@ -383,6 +263,6 @@ public class PlayerPixelArtSpawner : MonoBehaviour
 
     private void OnDestroy()
     {
-        ReleaseGeneratedResources();
+        ClearSpawnedTiles();
     }
 }
