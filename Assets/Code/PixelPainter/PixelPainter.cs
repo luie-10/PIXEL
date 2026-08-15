@@ -183,7 +183,24 @@ public class PixelPainter : MonoBehaviour
     {
         if (pixelDrawTilemap.HasTile(targetCellPos))
         {
+            // 1. 지우려는 타일의 색상 정보 확인
+            TileBase erasedTile = pixelDrawTilemap.GetTile(targetCellPos);
+            PixelColor erasedColor = GetColorFromTile(erasedTile);
+
+            // 2. 타일 삭제
             pixelDrawTilemap.SetTile(targetCellPos, null);
+
+            // 3. 지운 픽셀이 검은색(기본 무한)이 아니면 GameManager 수량 다시 추가(환불)
+            if (erasedColor != PixelColor.Black && GameManager.Instance != null)
+            {
+                // GameManager에 환불/추가 메서드가 없거나 이름이 다르면 프로젝트에 맞춰 사용
+                // 예: GameManager.Instance.AddPixel(erasedColor, 1);
+                // 기존 TryPaintPixel에서 UsePixel을 사용했으므로 반대로 -1을 전달하거나 AddPixel 사용
+                GameManager.Instance.UsePixel(erasedColor, -1);
+
+                // 팔레트 UI 잔여 수량 텍스트 갱신
+                if (paletteUI != null) paletteUI.UpdatePaletteUI();
+            }
 
             // 만약 지운 자리에 공격 타일이 지정되어 있었다면 함께 제거
             if (attackRangeTilemap != null && attackRangeTilemap.HasTile(targetCellPos))
