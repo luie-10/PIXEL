@@ -72,7 +72,10 @@ public class LoadingSceneManager : MonoBehaviour
                 // 게이지가 완전히 채워지면 씬 전환 허용
                 if (progressBar != null && progressBar.value >= 0.99f && timer >= fadeOrMinDelay)
                 {
-                    op.allowSceneActivation = true;
+                    op
+                        
+                        
+                        .allowSceneActivation = true;
                 }
             }
         }

@@ -110,6 +110,26 @@ public class GameManager : MonoBehaviour
         }
         return 0;
     }
+    // GameManager.cs 클래스 내부에 추가
+
+    // 코스트를 낼 만큼 픽셀이 남아있는지만 확인 (차감하지 않음)
+    public int GetOwnedPixelCount(PixelColor color)
+    {
+        if (color == PixelColor.None) return 0;
+        return totalSavedBlocks.TryGetValue(color, out int count) ? count : 0;
+    }
+
+    // 실제로 픽셀을 소비. 부족하면 false를 반환하고 아무것도 차감하지 않음
+    public bool TrySpendPixels(PixelColor color, int amount)
+    {
+        if (color == PixelColor.None || amount <= 0) return false;
+
+        if (!totalSavedBlocks.TryGetValue(color, out int current) || current < amount)
+            return false;
+
+        totalSavedBlocks[color] = current - amount;
+        return true;
+    }
 
     public IEnumerator ShowSummaryTextLineByLine(TextMeshProUGUI targetText)
     {
