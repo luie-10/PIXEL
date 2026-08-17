@@ -66,7 +66,7 @@ public class PixelColorConfig : ScriptableObject
         {
             if (durabilityTable[i].color == color)
                 return durabilityTable[i].maxDurability;
-        }8
+        }
 
         return int.MaxValue;
     }
