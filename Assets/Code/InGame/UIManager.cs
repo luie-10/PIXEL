@@ -65,13 +65,16 @@ public class UIManager : MonoBehaviour
     {
         if (GameManager.Instance == null) return;
 
+        // 인벤토리 패널은 "이번 라운드 획득량"이 아니라
+        // 실제로 조립/스킬에 사용되는 "누적 보유량(totalSavedBlocks)"을 보여줘야 하므로
+        // GetBlockCount 대신 GetTotalSavedBlockCount를 사용합니다.
         if (pixelListText != null)
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
 
             foreach (PixelColor color in System.Enum.GetValues(typeof(PixelColor)))
             {
-                int count = GameManager.Instance.GetBlockCount(color);
+                int count = GameManager.Instance.GetTotalSavedBlockCount(color);
                 sb.AppendLine($"{color.ToString().ToUpper()} : {count}");
             }
 
@@ -79,15 +82,15 @@ public class UIManager : MonoBehaviour
         }
 
         if (redPixelText != null)
-            redPixelText.text = $"R : {GameManager.Instance.GetBlockCount(PixelColor.Red)}";
+            redPixelText.text = $"R : {GameManager.Instance.GetTotalSavedBlockCount(PixelColor.Red)}";
 
         if (bluePixelText != null)
-            bluePixelText.text = $"B : {GameManager.Instance.GetBlockCount(PixelColor.Blue)}";
+            bluePixelText.text = $"B : {GameManager.Instance.GetTotalSavedBlockCount(PixelColor.Blue)}";
 
         if (yellowPixelText != null)
-            yellowPixelText.text = $"Y : {GameManager.Instance.GetBlockCount(PixelColor.Yellow)}";
+            yellowPixelText.text = $"Y : {GameManager.Instance.GetTotalSavedBlockCount(PixelColor.Yellow)}";
 
         if (greenPixelText != null)
-            greenPixelText.text = $"G : {GameManager.Instance.GetBlockCount(PixelColor.Green)}";
+            greenPixelText.text = $"G : {GameManager.Instance.GetTotalSavedBlockCount(PixelColor.Green)}";
     }
 }

@@ -12,13 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c2155de91c7bf7468987ae83eaed394, type: 3}
   m_Name: TestCard4
   m_EditorClassIdentifier: 
-  cardId: TestCard4
-  displayName: "\uD14C\uC2A4\uD2B8\uCE74\uB4DC4"
-  cardArt: {fileID: 21300000, guid: 0111bc09abad69448add44f335ef1c39, type: 3}
+  cardId: Card4
+  displayName: " \uC870\uAC01\uB0B8 \uB098\uB0A0"
+  cardArt: {fileID: 21300000, guid: 3173674c097b43040b5abcb7c07fffeb, type: 3}
   skillEffectIcon: {fileID: 21300000, guid: 127998a42b3d19742bacc91fe6982c35, type: 3}
-  color: 3
-  effectDetailText: "\uB098\uBB34 \uB4A4\uC5D0 \uB0A8\uC790\uAC00 \uC788\uB2E4.\r"
-  passiveDetailText: "\uB098\uBB34 \uB4A4\uC5D0 \uB0A8\uC790\uAC00 \uC788\uB2E4.\r"
+  color: 2
+  effectDetailText: "\uC0AC\uC6A9\uC2DC, \uD30C\uB780 \uD53D\uC140 15 \uC18C\uBAA8.\r\n\r\n\uD22C\uBA85
+    \uC5BB\uC74C.\r\n\uC774 \uC0C1\uD0DC\uB3D9\uC548 \uC801\uC5D0\uAC8C \uAC10\uC9C0\uB418\uC9C0
+    \uC54A\uC74C.\r\n\r\n\uC790\uC2E0\uC758 \uBD84\uC2E0\uC744 \uD604\uC7AC \uC704\uCE58\uC5D0
+    \uB9CC\uB4EC.\r\n\uC774 \uC0C1\uD0DC\uB294 5\uCD08\uAC04 \uC720\uC9C0\uB428.\r\n5\uCD08\uD6C4
+    \uBD84\uC2E0\uC740 \uC0AC\uB9DD\uD568.\r\n\r\n\uC740\uC2E0 \uC0C1\uD0DC\uC5D0\uC11C
+    \uACF5\uACA9 \uBC1B\uC744\uC2DC \uBD84\uC2E0\uC774 \uC0AC\uB9DD\uD558\uACE0 \uC790\uC2E0\uC758
+    \uD22C\uBA85\uD654\uAC00 \uD574\uC81C\uB428."
+  passiveDetailText: "\uC801\uC5D0\uAC8C \uD070 \uD53C\uD574\uB97C \uC785\uC5C8\uC744\uB54C,
+    \uCE74\uB4DC\uAC00 \uAC15\uC870 \uD45C\uC2DC\uB418\uACE0 \uC774\uB54C \uCE74\uB4DC\uB97C
+    \uC0AC\uC6A9\uD558\uBA74 \uBAA8\uB4E0 \uBD80\uC704\uC5D0 \uB300\uD55C \uBC29\uC5B4
+    +2 \uBD80\uC5EC\uAC00 \uCD94\uAC00 \uC801\uC6A9\uB428."
   usingAmoutMode: 0
   usingAmout: 333
   effects: []

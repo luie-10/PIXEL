@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: "\uB808\uB4DC \uB300\uC26C"
   cardArt: {fileID: 21300000, guid: b559703f74caf9346a3fa579361a2f73, type: 3}
   skillEffectIcon: {fileID: 21300000, guid: 127998a42b3d19742bacc91fe6982c35, type: 3}
-  color: 4
+  color: 1
   effectDetailText: "\uD6A8\uACFC \uBC1C\uB3D9\uC2DC \uD53C\uACA9\uB9C8\uB2E4 \uD604\uC7AC
     \uBCF4\uC720\uD55C \uBE68\uAC04 \uD53D\uC140\uC744 4\uAC1C \uC18C\uBAA8, \uBE68\uAC04
     \uD53D\uC140\uC774 \uC5C6\uB2E4\uBA74 \uD6A8\uACFC\uB97C \uC911\uC9C0\uD568.\r\n\r\n\uADFC\uCC98\uC758

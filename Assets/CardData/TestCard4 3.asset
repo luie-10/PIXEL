@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c2155de91c7bf7468987ae83eaed394, type: 3}
+  m_Name: TestCard4 3
+  m_EditorClassIdentifier: 
+  cardId: Card7
+  displayName: "\uAE30\uC5B4\uC624\uB294 \uB450\uB824\uC6C0"
+  cardArt: {fileID: 21300000, guid: 20f8c13cc77dc2a43af4ed7e436c1f54, type: 3}
+  skillEffectIcon: {fileID: 21300000, guid: 127998a42b3d19742bacc91fe6982c35, type: 3}
+  color: 2
+  effectDetailText: "\uC0AC\uC6A9\uC2DC, \uD30C\uB780 \uD53D\uC140\uC744 15 \uC18C\uBAA8\uD558\uACE0
+    12.5\uCD08\uAC04 \uBAA8\uB4E0 \uBD80\uC704\uC5D0 \uB300\uD55C \uBC29\uC5B4\uAC00
+    +3 \uC99D\uAC00\r\n5.5\uCD08\uAC00 \uC9C0\uB0A0\uC2DC \uBC29\uC5B4\uB825\uC774
+    \uB3CC\uC544\uC624\uBA70, \uCDE8\uC57D -2\uB97C 1.5\uCD08\uAC04 \uC801\uC6A9.\r\n\r"
+  passiveDetailText: "75 \uD53D\uC140 \uC774\uB0B4\uC5D0\uC11C \uB204\uAD70\uAC00
+    \uD53C\uD574\uB97C \uC785\uC744\uC2DC \uD53C\uD574\uAC00 \uBC1C\uC0DD\uD55C \uBC29\uD5A5\uC744
+    \uD654\uBA74\uC5D0 \uD45C\uC2DC\uD568.\r\n(\uBA40\uC218\uB85D \uB354 \uD22C\uBA85\uD558\uAC8C
+    \uD45C\uC2DC\uB428.)\r\n\r\n70 \uD53D\uC140 \uC774\uB0B4\uC5D0\uC11C, \uC0AC\uB9DD\uC774
+    \uBC1C\uC0DD\uD588\uB2E4\uBA74 8.5\uCD08\uAC04 \uC0AC\uB9DD\uC774 \uBC1C\uC0DD\uD55C
+    \uC704\uCE58\uB97C \uD654\uBA74\uC5D0 \uD45C\uC2DC\uD568.\r\n(\uBA40\uC218\uB85D
+    \uB354 \uD22C\uBA85\uD558\uAC8C \uD45C\uC2DC\uB428.)\r"
+  usingAmoutMode: 0
+  usingAmout: 333
+  effects: []

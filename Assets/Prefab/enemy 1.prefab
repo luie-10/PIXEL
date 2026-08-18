@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2096054120241633852}
   - component: {fileID: 460940974393864421}
   - component: {fileID: 9011934785456810942}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: enemy 1
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -175,4 +175,5 @@ MonoBehaviour:
   speed: 1
   colorBlock: 3
   pixelEffectPrefab: {fileID: 1166481414921601221, guid: 212ab90c1e94fd24cb02dafc8b328d66, type: 3}
+  damageToPlayer: 5
   changeDirectionInterval: 2

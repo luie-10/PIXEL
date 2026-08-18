@@ -2,84 +2,106 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(PlayerPixelBody))]
 public class PlayerSkillController : MonoBehaviour
 {
-    [Header("참조")]
-    public PlayerPixelBody pixelBody;
+    [Header("References")]
+    [SerializeField] private PlayerPixelBody pixelBody;
+    [SerializeField] private PlayerPixelMagnet magnet;
 
-    [Header("Red Rush - 돌진")]
-    public int redRushCost = 5;
-    public float redRushCooldown = 10f;
-    public float redRushDamageRatio = 0.15f;
-    public float redRushDashDistanceCells = 3f;
-    public float redRushDashDuration = 0.2f;
+    [Header("Red Rush (Red)")]
+    [SerializeField] private int redRushCost = 5;
+    [SerializeField] private float redRushCooldown = 10f;
+    [SerializeField] private float redRushDamageRatio = 0.15f;
+    [SerializeField] private float redRushDashDistanceCells = 3f;
+    [SerializeField] private float redRushDashDuration = 0.2f;
+    [SerializeField] private float redRushHitRadius = 0.6f;
+    [Tooltip("레드러쉬 연출이 플레이어 뒤쪽으로 얼마나 떨어져서 따라올지(칸 단위)")]
+    [SerializeField] private float redRushTrailOffsetCells = 1f;
 
-    [Header("Unyielding - 블루 보강")]
-    public int unyieldingCost = 5;
-    public float unyieldingCooldown = 30f;
+    [Header("Unyielding (Blue)")]
+    [SerializeField] private int unyieldingCost = 5;
+    [SerializeField] private float unyieldingCooldown = 30f;
+    [Tooltip("Unyielding 연출이 화면에 유지되는 시간(초). 버프 자체는 영구지만 연출은 잠깐만 보여줍니다.")]
+    [SerializeField] private float unyieldingEffectLifeTime = 1f;
 
-    [Header("Push - 밀쳐내기")]
-    public int pushCost = 10;
-    public float pushCooldown = 60f;
-    public float pushRangeCells = 3f;
-    public float pushDistanceCells = 3f;
-    public float pushStunDuration = 0.5f;
+    [Header("Push (Yellow)")]
+    [SerializeField] private int pushCost = 10;
+    [SerializeField] private float pushCooldown = 60f;
+    [SerializeField] private float pushRangeCells = 3f;
+    [SerializeField] private float pushDistanceCells = 3f;
+    [SerializeField] private float pushStunDuration = 0.5f;
+    [SerializeField] private LayerMask enemyLayerMask;
+    [Tooltip("Push 연출이 화면에 유지되는 시간(초)")]
+    [SerializeField] private float pushEffectLifeTime = 0.6f;
 
-    [Header("Magnetic Boost - 자석 강화")]
-    public int magnetBoostCost = 8;
-    public float magnetBoostCooldown = 60f;
-    public float magnetBoostMultiplier = 2.5f; // 반경 150% 증가 = 기존의 2.5배
-    public float magnetBoostDuration = 8f; // 기획서에 지속시간 명시 없어 임시값, 조정 필요
+    [Header("Magnetic Boost (Green)")]
+    [SerializeField] private int magnetBoostCost = 8;
+    [SerializeField] private float magnetBoostCooldown = 60f;
+    [SerializeField] private float magnetBoostMultiplier = 2.5f;
+    [SerializeField] private float magnetBoostDuration = 8f;
 
-    private Dictionary<PlayerSkillType, float> cooldownTimers = new Dictionary<PlayerSkillType, float>();
-    private PlayerPixelMagnet magnet;
+    [Header("Skill VFX Prefabs")]
+    [SerializeField] private GameObject redRushEffectPrefab;
+    [SerializeField] private GameObject unyieldingEffectPrefab;
+    [SerializeField] private GameObject pushEffectPrefab;
+    [SerializeField] private GameObject magnetBoostEffectPrefab;
+
+    [Header("Skill VFX Scale")]
+    [Tooltip("연출 크기 = 플레이어 현재 크기 × 이 값. 프리팹 원본 크기가 이미 적당하다면 1로 둡니다.")]
+    [SerializeField] private float effectScaleMultiplier = 1f;
+
+    private readonly Dictionary<PlayerSkillType, float> cooldownTimers = new Dictionary<PlayerSkillType, float>();
+    private bool isDashing;
 
     private void Awake()
     {
         if (pixelBody == null) pixelBody = GetComponent<PlayerPixelBody>();
-        magnet = GetComponent<PlayerPixelMagnet>();
+        if (magnet == null) magnet = GetComponent<PlayerPixelMagnet>();
 
-        foreach (PlayerSkillType skill in System.Enum.GetValues(typeof(PlayerSkillType)))
+        foreach (PlayerSkillType type in System.Enum.GetValues(typeof(PlayerSkillType)))
         {
-            cooldownTimers[skill] = 0f;
+            cooldownTimers[type] = 0f;
         }
     }
-    // PlayerSkillController.cs 클래스 내부, 기존 메서드들 사이에 추가
 
-    // UI에서 스킬 타입만으로 발동을 시도할 수 있도록 공개 래퍼를 제공합니다.
-    public bool ActivateSkill(PlayerSkillType skill)
+    private void Update()
     {
-        if (IsOnCooldown(skill)) return false;
-
-        bool activated = false;
-
-        switch (skill)
+        foreach (PlayerSkillType type in System.Enum.GetValues(typeof(PlayerSkillType)))
         {
-            case PlayerSkillType.RedRush:
-                activated = TryActivateRedRush();
-                if (activated) StartCooldown(skill, redRushCooldown);
-                break;
-            case PlayerSkillType.Unyielding:
-                activated = TryActivateUnyielding();
-                if (activated) StartCooldown(skill, unyieldingCooldown);
-                break;
-            case PlayerSkillType.Push:
-                activated = TryActivatePush();
-                if (activated) StartCooldown(skill, pushCooldown);
-                break;
-            case PlayerSkillType.MagnetBoost:
-                activated = TryActivateMagnetBoost();
-                if (activated) StartCooldown(skill, magnetBoostCooldown);
-                break;
+            if (cooldownTimers[type] > 0f)
+            {
+                cooldownTimers[type] -= Time.deltaTime;
+            }
         }
 
-        return activated;
+        if (SettingsManager.Instance == null) return;
+
+        foreach (PlayerSkillType type in System.Enum.GetValues(typeof(PlayerSkillType)))
+        {
+            KeyCode key = SettingsManager.Instance.GetSkillKey(type);
+            if (key != KeyCode.None && Input.GetKeyDown(key))
+            {
+                ActivateSkill(type);
+            }
+        }
     }
 
-    // UI가 쿨타임 게이지(fillAmount)를 그리기 위해 최대 쿨타임 값을 필요로 합니다.
-    public float GetCooldownDuration(PlayerSkillType skill)
+    public bool ActivateSkill(PlayerSkillType type)
     {
-        switch (skill)
+        switch (type)
+        {
+            case PlayerSkillType.RedRush: return TryActivateRedRush();
+            case PlayerSkillType.Unyielding: return TryActivateUnyielding();
+            case PlayerSkillType.Push: return TryActivatePush();
+            case PlayerSkillType.MagnetBoost: return TryActivateMagnetBoost();
+            default: return false;
+        }
+    }
+
+    public float GetCooldownDuration(PlayerSkillType type)
+    {
+        switch (type)
         {
             case PlayerSkillType.RedRush: return redRushCooldown;
             case PlayerSkillType.Unyielding: return unyieldingCooldown;
@@ -89,10 +111,13 @@ public class PlayerSkillController : MonoBehaviour
         }
     }
 
-    // UI가 "코스트 부족" 상태를 판단하기 위해 필요한 소모 픽셀 개수입니다.
-    public int GetPixelCost(PlayerSkillType skill)
+    public float GetRemainingCooldown(PlayerSkillType type) => Mathf.Max(0f, cooldownTimers[type]);
+
+    public bool IsOnCooldown(PlayerSkillType type) => cooldownTimers[type] > 0f;
+
+    public int GetPixelCost(PlayerSkillType type)
     {
-        switch (skill)
+        switch (type)
         {
             case PlayerSkillType.RedRush: return redRushCost;
             case PlayerSkillType.Unyielding: return unyieldingCost;
@@ -102,111 +127,60 @@ public class PlayerSkillController : MonoBehaviour
         }
     }
 
-    // 스킬 타입에 대응하는 픽셀 색상입니다. GameManager.GetOwnedPixelCount 호출 시 필요합니다.
-    public PixelColor GetPixelColor(PlayerSkillType skill)
+    public PixelColor GetPixelColor(PlayerSkillType type)
     {
-        switch (skill)
+        switch (type)
         {
             case PlayerSkillType.RedRush: return PixelColor.Red;
             case PlayerSkillType.Unyielding: return PixelColor.Blue;
             case PlayerSkillType.Push: return PixelColor.Yellow;
             case PlayerSkillType.MagnetBoost: return PixelColor.Green;
-            default: return PixelColor.None;
+            default: return PixelColor.Black;
         }
     }
 
-    private void Update()
-    {
-        List<PlayerSkillType> keys = new List<PlayerSkillType>(cooldownTimers.Keys);
-        foreach (var skill in keys)
-        {
-            if (cooldownTimers[skill] > 0f)
-                cooldownTimers[skill] -= Time.deltaTime;
-        }
-
-        if (SettingsManager.Instance == null) return;
-
-        if (Input.GetKeyDown(SettingsManager.Instance.GetSkillKey(PlayerSkillType.RedRush)))
-            TryActivateSkill(PlayerSkillType.RedRush);
-
-        if (Input.GetKeyDown(SettingsManager.Instance.GetSkillKey(PlayerSkillType.Unyielding)))
-            TryActivateSkill(PlayerSkillType.Unyielding);
-
-        if (Input.GetKeyDown(SettingsManager.Instance.GetSkillKey(PlayerSkillType.Push)))
-            TryActivateSkill(PlayerSkillType.Push);
-
-        if (Input.GetKeyDown(SettingsManager.Instance.GetSkillKey(PlayerSkillType.MagnetBoost)))
-            TryActivateSkill(PlayerSkillType.MagnetBoost);
-    }
-
-    // UI 버튼 OnClick에 각각 연결
-    public void OnClickRedRush() => TryActivateSkill(PlayerSkillType.RedRush);
-    public void OnClickUnyielding() => TryActivateSkill(PlayerSkillType.Unyielding);
-    public void OnClickPush() => TryActivateSkill(PlayerSkillType.Push);
-    public void OnClickMagnetBoost() => TryActivateSkill(PlayerSkillType.MagnetBoost);
-
-    public bool IsOnCooldown(PlayerSkillType skill) => cooldownTimers.TryGetValue(skill, out float t) && t > 0f;
-    public float GetRemainingCooldown(PlayerSkillType skill) => cooldownTimers.TryGetValue(skill, out float t) ? Mathf.Max(0f, t) : 0f;
-
-    private void TryActivateSkill(PlayerSkillType skill)
-    {
-        if (IsOnCooldown(skill)) return;
-
-        switch (skill)
-        {
-            case PlayerSkillType.RedRush:
-                if (TryActivateRedRush()) StartCooldown(skill, redRushCooldown);
-                break;
-            case PlayerSkillType.Unyielding:
-                if (TryActivateUnyielding()) StartCooldown(skill, unyieldingCooldown);
-                break;
-            case PlayerSkillType.Push:
-                if (TryActivatePush()) StartCooldown(skill, pushCooldown);
-                break;
-            case PlayerSkillType.MagnetBoost:
-                if (TryActivateMagnetBoost()) StartCooldown(skill, magnetBoostCooldown);
-                break;
-        }
-    }
-
-    private void StartCooldown(PlayerSkillType skill, float duration)
-    {
-        cooldownTimers[skill] = duration;
-    }
-
+    // ==========================================
+    // Red Rush : 전방 대시 + 경로상의 적에게 데미지
+    // 연출은 플레이어 뒤쪽에서 방향을 맞춰 따라오다가, 대시가 끝나는 순간 함께 삭제됩니다.
+    // ==========================================
     private bool TryActivateRedRush()
     {
-        if (!GameManager.Instance.TrySpendPixels(PixelColor.Red, redRushCost))
-            return false;
+        if (cooldownTimers[PlayerSkillType.RedRush] > 0f || isDashing) return false;
+        if (GameManager.Instance == null || !GameManager.Instance.TrySpendPixels(PixelColor.Red, redRushCost)) return false;
 
-        float damage = pixelBody.CurrentAttack * redRushDamageRatio;
-        Vector2 dashDir = transform.up; // 실제 이동 스크립트의 전진 축에 맞게 수정
-        float dashDistance = redRushDashDistanceCells * PixelGameConstants.CellToWorld;
+        cooldownTimers[PlayerSkillType.RedRush] = redRushCooldown;
 
-        StartCoroutine(RedRushRoutine(dashDir, dashDistance, damage));
+        float offsetWorld = redRushTrailOffsetCells * PixelGameConstants.CellToWorld;
+        SpawnSkillEffect(redRushEffectPrefab, "RedRush", redRushDashDuration, offsetWorld);
+
+        StartCoroutine(CoRedRushDash());
         return true;
     }
 
-    private IEnumerator RedRushRoutine(Vector2 direction, float distance, float damage)
+    private IEnumerator CoRedRushDash()
     {
+        isDashing = true;
+
+        Vector3 dashDir = transform.up;
+        float distanceWorld = redRushDashDistanceCells * PixelGameConstants.CellToWorld;
         Vector3 start = transform.position;
-        Vector3 end = start + (Vector3)(direction * distance);
+        Vector3 end = start + dashDir * distanceWorld;
+
+        HashSet<Enemy> alreadyHit = new HashSet<Enemy>();
         float elapsed = 0f;
-        HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
 
         while (elapsed < redRushDashDuration)
         {
             transform.position = Vector3.Lerp(start, end, elapsed / redRushDashDuration);
 
-            Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 0.3f);
-            foreach (var hit in hits)
+            Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, redRushHitRadius);
+            foreach (Collider2D hit in hits)
             {
                 Enemy enemy = hit.GetComponent<Enemy>();
-                if (enemy != null && !hitEnemies.Contains(enemy))
+                if (enemy != null && !alreadyHit.Contains(enemy))
                 {
-                    hitEnemies.Add(enemy);
-                    enemy.TakeDamage(damage);
-                    enemy.ApplyKnockback(direction, distance, 0.15f);
+                    alreadyHit.Add(enemy);
+                    enemy.TakeDamage(pixelBody.CurrentAttack * redRushDamageRatio);
                 }
             }
 
@@ -215,59 +189,94 @@ public class PlayerSkillController : MonoBehaviour
         }
 
         transform.position = end;
+        isDashing = false;
     }
 
+    // ==========================================
+    // Unyielding : 파란 픽셀 소모 후 외곽 타일에 내구도 보너스
+    // ==========================================
     private bool TryActivateUnyielding()
     {
-        if (!GameManager.Instance.TrySpendPixels(PixelColor.Blue, unyieldingCost))
-            return false;
+        if (cooldownTimers[PlayerSkillType.Unyielding] > 0f) return false;
+        if (GameManager.Instance == null || !GameManager.Instance.TrySpendPixels(PixelColor.Blue, unyieldingCost)) return false;
+
+        cooldownTimers[PlayerSkillType.Unyielding] = unyieldingCooldown;
 
         int ownedBlueAfterCost = GameManager.Instance.GetOwnedPixelCount(PixelColor.Blue);
         int bonusHp = ownedBlueAfterCost / 2;
+        pixelBody.ApplyOuterTileBonus(bonusHp);
 
-        if (bonusHp > 0)
-            pixelBody.ApplyOuterTileBonus(bonusHp);
-
+        SpawnSkillEffect(unyieldingEffectPrefab, "Unyielding", unyieldingEffectLifeTime, 0f);
         return true;
     }
 
+    // ==========================================
+    // Push : 범위 내 적 밀치기 + 스턴
+    // ==========================================
     private bool TryActivatePush()
     {
-        if (!GameManager.Instance.TrySpendPixels(PixelColor.Yellow, pushCost))
-            return false;
+        if (cooldownTimers[PlayerSkillType.Push] > 0f) return false;
+        if (GameManager.Instance == null || !GameManager.Instance.TrySpendPixels(PixelColor.Yellow, pushCost)) return false;
 
-        float range = pushRangeCells * PixelGameConstants.CellToWorld;
-        float pushDistance = pushDistanceCells * PixelGameConstants.CellToWorld;
+        cooldownTimers[PlayerSkillType.Push] = pushCooldown;
 
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, range);
-        foreach (var hit in hits)
+        float rangeWorld = pushRangeCells * PixelGameConstants.CellToWorld;
+        float distanceWorld = pushDistanceCells * PixelGameConstants.CellToWorld;
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, rangeWorld, enemyLayerMask);
+        foreach (Collider2D hit in hits)
         {
             Enemy enemy = hit.GetComponent<Enemy>();
             if (enemy == null) continue;
 
-            Vector2 dir = (enemy.transform.position - transform.position).normalized;
-            enemy.ApplyKnockback(dir, pushDistance, 0.2f);
+            Vector2 dir = (enemy.transform.position - transform.position);
+            enemy.ApplyKnockback(dir, distanceWorld, 0.2f);
             enemy.Stun(pushStunDuration);
         }
 
+        SpawnSkillEffect(pushEffectPrefab, "Push", pushEffectLifeTime, 0f);
         return true;
     }
 
+    // ==========================================
+    // Magnetic Boost : 일정 시간 픽셀 수집 범위 배율 증가
+    // 연출은 버프 지속 시간(magnetBoostDuration)과 정확히 같은 시간만큼 유지된 뒤 삭제됩니다.
+    // ==========================================
     private bool TryActivateMagnetBoost()
     {
-        if (!GameManager.Instance.TrySpendPixels(PixelColor.Green, magnetBoostCost))
-            return false;
+        if (cooldownTimers[PlayerSkillType.MagnetBoost] > 0f) return false;
+        if (GameManager.Instance == null || !GameManager.Instance.TrySpendPixels(PixelColor.Green, magnetBoostCost)) return false;
+
+        cooldownTimers[PlayerSkillType.MagnetBoost] = magnetBoostCooldown;
 
         if (magnet != null)
-            StartCoroutine(MagnetBoostRoutine());
+        {
+            magnet.SetTemporaryMultiplier(magnetBoostMultiplier, magnetBoostDuration);
+        }
 
+        SpawnSkillEffect(magnetBoostEffectPrefab, "MagnetBoost", magnetBoostDuration, 0f);
         return true;
     }
 
-    private IEnumerator MagnetBoostRoutine()
+    // ==========================================
+    // 공통 이펙트 소환 : 플레이어 크기에 비례해 스케일을 맞추고,
+    // 지정된 lifeTime(=스킬 지속 시간)이 끝나면 자동으로 삭제됩니다.
+    // followOffsetWorld가 0보다 크면 플레이어 뒤쪽에서 따라오는 잔상 연출이 됩니다.
+    // ==========================================
+    private void SpawnSkillEffect(GameObject prefab, string skillName, float lifeTime, float followOffsetWorld)
     {
-        magnet.SetTemporaryMultiplier(magnetBoostMultiplier);
-        yield return new WaitForSeconds(magnetBoostDuration);
-        magnet.SetTemporaryMultiplier(1f);
+        if (prefab == null)
+        {
+            Debug.LogWarning($"[{skillName}] 이펙트 프리팹 슬롯이 비어있어 연출이 생성되지 않습니다. 인스펙터에서 프리팹을 연결해 주세요.");
+            return;
+        }
+
+        GameObject spawned = Instantiate(prefab, transform.position, transform.rotation);
+
+        PlayerEffectFollower follower = spawned.GetComponent<PlayerEffectFollower>();
+        if (follower == null) follower = spawned.AddComponent<PlayerEffectFollower>();
+        follower.Setup(transform, followOffsetWorld, effectScaleMultiplier);
+
+        Destroy(spawned, lifeTime);
     }
 }

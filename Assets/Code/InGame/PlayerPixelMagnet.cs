@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -13,7 +14,8 @@ public class PlayerPixelMagnet : MonoBehaviour
     [SerializeField] private PlayerPixelBody pixelBody;
 
     private float temporaryMultiplier = 1f;
-
+    private Coroutine temporaryMultiplierCoroutine;
+    private float temporaryMultiplierValue = 1f;
     private void Awake()
     {
         if (pixelBody == null) pixelBody = GetComponent<PlayerPixelBody>();
@@ -32,8 +34,28 @@ public class PlayerPixelMagnet : MonoBehaviour
         }
     }
 
-    public void SetTemporaryMultiplier(float multiplier)
+   
+
+    /// <summary>
+    /// 일정 시간(duration) 동안 픽셀 수집 범위에 배율(multiplier)을 곱해 적용합니다.
+    /// 이미 다른 임시 배율이 적용 중이면 취소하고 새로 시작합니다(중첩 방지).
+    /// PlayerSkill.cs의 Magnetic Boost 스킬에서 호출합니다.
+    /// </summary>
+    public void SetTemporaryMultiplier(float multiplier, float duration)
     {
-        temporaryMultiplier = multiplier;
+        if (temporaryMultiplierCoroutine != null)
+        {
+            StopCoroutine(temporaryMultiplierCoroutine);
+        }
+
+        temporaryMultiplierCoroutine = StartCoroutine(CoTemporaryMultiplier(multiplier, duration));
+    }
+
+    private IEnumerator CoTemporaryMultiplier(float multiplier, float duration)
+    {
+        temporaryMultiplierValue = multiplier;
+        yield return new WaitForSeconds(duration);
+        temporaryMultiplierValue = 1f;
+        temporaryMultiplierCoroutine = null;
     }
 }
